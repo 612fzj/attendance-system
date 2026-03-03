@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       .from("attendance_records")
       .select(`
         id, employee_id, record_date,
-        check_in_status, check_out_status, work_duration_minutes,
+        check_in_time, check_in_status, check_out_status, work_duration_minutes,
         employee:employees(id, name, employee_no)
       `)
       .gte("record_date", startStr)
