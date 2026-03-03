@@ -35,11 +35,11 @@ export default function DailyReportPage() {
 
   const fetchReport = async () => {
     setLoading(true);
-    const url = new URL("http://localhost:3000/api/reports/daily-work");
-    url.searchParams.append("employee_id", selectedEmployee);
-    url.searchParams.append("date", date);
+    const params = new URLSearchParams();
+    params.append("employee_id", selectedEmployee);
+    params.append("date", date);
     
-    const res = await fetch(url);
+    const res = await fetch(`/api/reports/daily-work?${params.toString()}`);
     const data = await res.json();
     if (data.success) {
       setReport(data.data);

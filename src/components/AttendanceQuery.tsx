@@ -47,12 +47,12 @@ export default function AttendanceQuery({ employees }: AttendanceQueryProps) {
 
     setLoading(true);
     try {
-      const url = new URL("http://localhost:3000/api/attendance/query");
-      url.searchParams.append("employee_id", selectedEmployee);
-      if (startDate) url.searchParams.append("start_date", startDate);
-      if (endDate) url.searchParams.append("end_date", endDate);
+      const params = new URLSearchParams();
+      params.append("employee_id", selectedEmployee);
+      if (startDate) params.append("start_date", startDate);
+      if (endDate) params.append("end_date", endDate);
 
-      const res = await fetch(url.toString());
+      const res = await fetch(`/api/attendance/query?${params.toString()}`);
       const result = await res.json();
       setData(result.data);
     } catch (error) {
