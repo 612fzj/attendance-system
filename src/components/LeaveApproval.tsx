@@ -21,10 +21,26 @@ export default function LeaveApproval() {
   const [pendingList, setPendingList] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchPendingList();
   }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      // 获取当前用户（第一个有审批权限的用户）
+      const res = await fetch("/api/leave/approvers");
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        // 默认使用第一个审批人
+        setCurrentUserId(data.data[0].id);
+      }
+    } catch (error) {
+      console.error("获取当前用户失败:", error);
+    }
+  };
 
   const fetchPendingList = async () => {
     try {
@@ -40,6 +56,10 @@ export default function LeaveApproval() {
   };
 
   const handleApprove = async (id: string) => {
+    if (!currentUserId) {
+      alert("无法获取当前用户信息");
+      return;
+    }
     setProcessing(id);
     try {
       const res = await fetch("/api/leave/approve", {
@@ -47,7 +67,7 @@ export default function LeaveApproval() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           request_id: id,
-          approver_id: "d8f80e75-f1f1-4ea7-b81e-3f82e58d4604", // 管理员王五
+          approver_id: currentUserId,
           action: "approve",
           comment: "同意"
         }),
@@ -76,7 +96,7 @@ export default function LeaveApproval() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           request_id: id,
-          approver_id: "d8f80e75-f1f1-4ea7-b81e-3f82e58d4604",
+          approver_id: currentUserId,
           action: "reject",
           comment: reason
         }),

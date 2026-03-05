@@ -23,20 +23,17 @@ export default function LeavePage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/employees").then((res) => res.json()),
+      fetch("/api/leave/types").then((res) => res.json()),
     ])
-      .then(([empData]) => {
+      .then(([empData, typeData]) => {
         if (empData.success) {
           setEmployees(empData.data);
         }
         
-        // 静态请假类型
-        setLeaveTypes([
-          { type_code: "annual", type_name: "年假" },
-          { type_code: "sick", type_name: "病假" },
-          { type_code: "personal", type_name: "事假" },
-          { type_code: "business", type_name: "出差" },
-          { type_code: "marital", type_name: "婚假" },
-        ]);
+        // 从数据库获取请假类型
+        if (typeData.success && typeData.data) {
+          setLeaveTypes(typeData.data);
+        }
       })
       .finally(() => setLoading(false));
   }, []);

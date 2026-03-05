@@ -89,15 +89,35 @@ export async function GET(request: NextRequest) {
     const totalWorkDays = employeeList.reduce((sum, e) => sum + e.total_days, 0);
     const totalNormal = employeeList.reduce((sum, e) => sum + e.normal_days, 0);
     const totalLate = employeeList.reduce((sum, e) => sum + e.late_days, 0);
+    
+    // 获取员工总数
+    const { count: totalEmployees } = await supabase
+      .from("employees")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true);
+    
+    // 本周请假总天数
+    const totalLeaveDays = leaves?.reduce((sum, l) => sum + (l.total_days || 0), 0) || 0;
+    
+    // 分母：员工总数 - 请假天数
+    const denominator = (totalEmployees || 0) - totalLeaveDays;
+    // 分子：正常 + 迟到天数
+    const numerator = totalNormal + totalLate;
+    // 出勤率
+    const attendanceRate = denominator > 0 
+      ? ((numerator / denominator) * 100).toFixed(1) + "%" 
+      : "0%";
 
     const result = {
       period: { start: startStr, end: endStr },
       week_num: getWeekNumber(today),
       summary: {
+        total_employees: totalEmployees,
         total_work_days: totalWorkDays,
         normal_days: totalNormal,
         late_days: totalLate,
-        attendance_rate: totalWorkDays > 0 ? ((totalNormal / totalWorkDays) * 100).toFixed(1) + "%" : "0%",
+        leave_days: totalLeaveDays,
+        attendance_rate: attendanceRate,
       },
       employees: employeeList
     };

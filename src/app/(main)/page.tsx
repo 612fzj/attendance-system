@@ -13,12 +13,44 @@ export default function Home() {
   const [stats, setStats] = useState<Stat[]>([]);
 
   useEffect(() => {
-    setStats([
-      { label: "员工总数", value: 3, color: "blue" },
-      { label: "今日出勤", value: 2, color: "green" },
-      { label: "请假中", value: 1, color: "purple" },
-      { label: "迟到", value: 0, color: "red" },
-    ]);
+    async function fetchStats() {
+      try {
+        // 获取员工总数
+        const employeesRes = await fetch("/api/employees");
+        const employeesData = await employeesRes.json();
+        const totalEmployees = employeesData.data?.length || 0;
+
+        // 获取今日考勤数据（批量查询，一次请求）
+        const batchRes = await fetch("/api/attendance/batch-query");
+        const batchData = await batchRes.json();
+        
+        const todayRecords = batchData.data || [];
+        const checkedIn = todayRecords.filter((r: any) => r.today?.check_in_time).length;
+        const lateCount = todayRecords.filter((r: any) => r.today?.check_in_status === "late").length;
+
+        // 获取请假中数量（待审批）
+        const leavesRes = await fetch("/api/leave/pending");
+        const leavesData = await leavesRes.json();
+        const pendingLeaves = leavesData.data?.length || 0;
+
+        setStats([
+          { label: "员工总数", value: totalEmployees, color: "blue" },
+          { label: "今日出勤", value: checkedIn, color: "green" },
+          { label: "待审批", value: pendingLeaves, color: "purple" },
+          { label: "迟到", value: lateCount, color: "red" },
+        ]);
+      } catch (error) {
+        console.error("获取统计数据失败:", error);
+        setStats([
+          { label: "员工总数", value: 0, color: "blue" },
+          { label: "今日出勤", value: 0, color: "green" },
+          { label: "待审批", value: 0, color: "purple" },
+          { label: "迟到", value: 0, color: "red" },
+        ]);
+      }
+    }
+
+    fetchStats();
   }, []);
 
   const colorMap: Record<string, string> = {
