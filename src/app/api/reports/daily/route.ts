@@ -89,16 +89,29 @@ export async function GET(request: NextRequest) {
       let checkInStatus = 'absent';
       let checkInTime: string | null = null;
       if (record?.check_in_time) {
-        checkInTime = new Date(record.check_in_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        // 使用中国时区
+        checkInTime = new Date(record.check_in_time).toLocaleTimeString('zh-CN', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'Asia/Shanghai'
+        });
         checkInStatus = record.check_in_status || 'normal';
       }
       
       let checkOutStatus: string | null = null;
       let checkOutTime: string | null = null;
       if (record?.check_out_time) {
-        checkOutTime = new Date(record.check_out_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        checkOutTime = new Date(record.check_out_time).toLocaleTimeString('zh-CN', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'Asia/Shanghai'
+        });
         checkOutStatus = record.check_out_status || 'normal';
       }
+
+      // 工时转换为小时
+      const workDurationMinutes = record?.work_duration_minutes || null;
+      const workDurationHours = workDurationMinutes ? (workDurationMinutes / 60).toFixed(1) : null;
 
       return {
         name: emp.name,
@@ -107,7 +120,7 @@ export async function GET(request: NextRequest) {
         check_in_status: checkInStatus,
         check_out_time: checkOutTime,
         check_out_status: checkOutStatus,
-        work_duration: record?.work_duration_minutes || null,
+        work_duration: workDurationHours ? `${workDurationHours}h` : null,
         is_on_leave: !!leave,
         leave_type: leave ? leaveTypeMap.get((leave as any).leave_type) : null
       };
